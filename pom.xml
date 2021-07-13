@@ -14,6 +14,8 @@
         <testng.version>7.4.0</testng.version>
         <restAssured.version>4.4.0</restAssured.version>
         <json-simple.version>1.1.1</json-simple.version>
+        <jackson.version>2.12.4</jackson.version>
+        <lombok.version>RELEASE</lombok.version>
     </properties>
 
     <dependencies>
@@ -33,6 +35,22 @@
             <groupId>com.googlecode.json-simple</groupId>
             <artifactId>json-simple</artifactId>
             <version>${json-simple.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 

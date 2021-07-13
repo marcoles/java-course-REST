@@ -1,71 +1,154 @@
 package tests;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import io.restassured.http.ContentType;
+import io.restassured.response.Response;
+import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
+
+import java.util.List;
+
 import static io.restassured.RestAssured.*;
 import static org.hamcrest.Matchers.*;
+import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.core.*;
 
 @Listeners (TestListener.class)
 public class APITests {
+    ObjectMapper objectMapper;
 
     @BeforeClass
     public void setupURI() {
         baseURI = "https://dummy.restapiexample.com/api/v1/";
-        System.out.println("Setting up base URI...");
+        objectMapper = new ObjectMapper()
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
 
     @Test
     public void testGet() {
-        //baseURI = "https://dummy.restapiexample.com/api/v1/"; ask Kamil about BeforeClass vs BeforeMethod
-        given()
-                .baseUri(baseURI)
-                .contentType(ContentType.JSON)
-                .get("employees").
-        then()
-                .statusCode(200)
-                .body("data[0].employee_name", equalTo("Tiger Nixon"))
-                .body("data[1].employee_salary", equalTo(170750));
+        Response response = given()
+                                .baseUri(baseURI)
+                                .contentType(ContentType.JSON)
+                                .get("employees");
+
+        Integer statusCode = response.getStatusCode();
+        EmployeesResponse employeesResponse = null;
+
+        try {
+            employeesResponse =
+                    objectMapper.readValue(response.getBody().asString(), EmployeesResponse.class);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        // how to deal with the try block and null check (if)?
+        Integer expectedStatusCode = 200;
+        Integer secondEmployeeAge = 63;// ?
+        String successStatus = "success";
+        String firstEmployeeName = "Tiger Nixon";
+
+        assert employeesResponse != null; // ?
+        Assert.assertEquals(statusCode, expectedStatusCode, "Wrong status code");
+        Assert.assertEquals(employeesResponse.getStatus(), successStatus, "Wrong status");
+        Assert.assertEquals(employeesResponse.getData().get(0).getEmployee_name(), firstEmployeeName, "Data is not matching" );
+        Assert.assertEquals(employeesResponse.getData().get(1).getEmployee_age(), secondEmployeeAge, "Data is not matching");
 
     }
 
     @Test
     public void testPost() {
-        /*
-        Map<String, String> employeeData = new HashMap<>();
-        employeeData.put("name", "Marcin");
-        employeeData.put("salary", "2000");
-        employeeData.put("age", "25");
-        */
-        given()
-                .body("\"name\":\"Marcin\", \"salary\":\"2000\", \"age\":\"25\"").
-        when()
-                .post("create").
-        then()
-                .statusCode(200)
-                .body("status", equalTo("success"));
+        NewEmployee newEmployee = new NewEmployee("Marcin", "2000", "25");
+        String newEmployeeAsString = null;
+        try {
+            newEmployeeAsString = objectMapper.writeValueAsString(newEmployee);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        System.out.println(newEmployeeAsString);
+        Response response = given()
+                                .baseUri(baseURI)
+                                .contentType(ContentType.JSON)
+                                .body(newEmployeeAsString)
+                                .post("create");
+
+        Integer statusCode = response.getStatusCode();
+        CreateResponse createResponse = null;
+        try {
+            createResponse =
+                    objectMapper.readValue(response.getBody().asString(), CreateResponse.class);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        Integer expectedStatusCode = 200;
+        String successStatus = "success";
+
+        assert createResponse != null;
+        Assert.assertEquals(statusCode, expectedStatusCode, "Wrong status code");
+        Assert.assertEquals(createResponse.getStatus(), successStatus, "Wrong status");
+        Assert.assertEquals(createResponse.getData().getName(), newEmployee.getName(), "Data is not matching" );
+        Assert.assertEquals(createResponse.getData().getSalary(), newEmployee.getSalary(), "Data is not matching");
+
+
     }
 
     @Test
     public void testPut() {
-        given().
-                body("\"name\":\"Marcin\", \"salary\":\"2000\", \"age\":\"25\"").
-        when()
-                .put("update/3").
-        then()
-                .statusCode(200)
-                .body("status", equalTo("success"));
+        NewEmployee newEmployee = new NewEmployee("Marcin", "2000", "25");
+        String newEmployeeAsString = null;
+        try {
+            newEmployeeAsString = objectMapper.writeValueAsString(newEmployee);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        System.out.println(newEmployeeAsString);
+        Response response = given()
+                                .baseUri(baseURI)
+                                .contentType(ContentType.JSON)
+                                .body(newEmployeeAsString)
+                                .put("update/1");
+
+        Integer statusCode = response.getStatusCode();
+        CreateResponse createResponse = null;
+        try {
+            createResponse =
+                    objectMapper.readValue(response.getBody().asString(), CreateResponse.class);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        Integer expectedStatusCode = 200;
+        String successStatus = "success";
+
+        assert createResponse != null;
+        Assert.assertEquals(statusCode, expectedStatusCode, "Wrong status code");
+        Assert.assertEquals(createResponse.getStatus(), successStatus, "Wrong status");
+        Assert.assertEquals(createResponse.getData().getName(), newEmployee.getName(), "Data is not matching" );
+        Assert.assertEquals(createResponse.getData().getSalary(), newEmployee.getSalary(), "Data is not matching");
     }
 
     @Test
     public void testDelete() {
-        when()
-                .delete("delete/1").
-        then()
-                .statusCode(200)
-                .body("status", equalTo("success"));
+        Response response = given()
+                                .baseUri(baseURI)
+                                .contentType(ContentType.JSON)
+                                .delete("delete/1");
+
+        Integer statusCode = response.getStatusCode();
+        DeleteResponse deleteResponse = null;
+        try {
+            deleteResponse =
+                    objectMapper.readValue(response.getBody().asString(), DeleteResponse.class);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
+        Integer expectedStatusCode = 200;
+        String successStatus = "success";
+
+        assert deleteResponse != null;
+        Assert.assertEquals(statusCode, expectedStatusCode, "Wrong status code");
+        Assert.assertEquals(deleteResponse.getStatus(), successStatus, "Wrong status");
+
     }
 }
